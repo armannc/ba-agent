@@ -1,7 +1,8 @@
 'use client'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { MessageSquare, BookOpen, FileText, StickyNote, BarChart2, Settings } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { MessageSquare, BookOpen, FileText, StickyNote, BarChart2, Settings, LogOut } from 'lucide-react'
+import { createBrowserClient } from '@supabase/ssr'
 
 const nav = [
   { href: '/', icon: MessageSquare, label: 'Чат с агентом' },
@@ -13,6 +14,17 @@ const nav = [
 
 export default function Sidebar() {
   const path = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }
+
   return (
     <aside className="w-60 shrink-0 flex flex-col bg-slate-panel border-r border-slate-border h-screen sticky top-0">
       {/* Logo */}
@@ -27,7 +39,6 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {nav.map(({ href, icon: Icon, label }) => {
@@ -48,7 +59,6 @@ export default function Sidebar() {
           )
         })}
       </nav>
-
       {/* Footer */}
       <div className="px-3 pb-4">
         <Link
@@ -58,6 +68,13 @@ export default function Sidebar() {
           <Settings size={16} />
           Настройки
         </Link>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-border hover:text-red-400 hover:bg-slate-card transition-all mt-1"
+        >
+          <LogOut size={16} />
+          Выйти
+        </button>
         <div className="mt-3 px-3 py-2 rounded-lg bg-accent-muted">
           <p className="text-[10px] text-accent font-mono uppercase tracking-wider">Статус агента</p>
           <div className="flex items-center gap-1.5 mt-1">
