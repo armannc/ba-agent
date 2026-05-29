@@ -23,8 +23,18 @@ export interface BusinessRequirement {
   metrics: string[]
   raw_text?: string
   analysis?: {
-    issues: unknown[]
-    conflicts: unknown[]
+    issues: {
+      type: string
+      severity: string
+      description: string
+      suggestion: string
+      requirement_ref: string
+    }[]
+    conflicts: {
+      req_a: string
+      req_b: string
+      description: string
+    }[]
     overall_score: number
     summary: string
   }
