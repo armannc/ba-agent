@@ -20,7 +20,7 @@ export interface BusinessRequirement {
   tags: string[]
   conflicts: string[]          // IDs of conflicting requirements
   related: string[]            // IDs of related requirements
-  metrics: string[]            // KPIs to measure after release
+  metrics: string[]\n  raw_text?: string\n  analysis?: { issues: unknown[]; conflicts: unknown[]; overall_score: number; summary: string }            // KPIs to measure after release
   created_at: string
   updated_at: string
 }
