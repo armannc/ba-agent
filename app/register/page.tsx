@@ -17,13 +17,17 @@ export default function RegisterPage() {
   const router = useRouter()
 
   const handleRegister = async () => {
-    setLoading(true)
-    setError('')
-    const { error } = await supabase.auth.signUp({ email, password })
-    if (error) setError(error.message)
-    else setDone(true)
+  setLoading(true)
+  setError('')
+  const { error } = await supabase.auth.signUp({ email, password })
+  if (error) {
+    setError(error.message)
     setLoading(false)
+    return
   }
+  setDone(true)
+  setLoading(false)
+}
 
   if (done) return (
     <div className="min-h-screen bg-ink flex items-center justify-center">
