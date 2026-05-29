@@ -25,7 +25,8 @@ export default function LoginPage() {
     setLoading(false)
     return
   }
-  window.location.href = '/dashboard'
+  await new Promise(r => setTimeout(r, 500))
+  window.location.replace('/dashboard')
 }
 
   return (
