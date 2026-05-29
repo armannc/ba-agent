@@ -18,6 +18,7 @@ export async function getUser() {
       },
     }
   )
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.auth.getUser()
+  console.log('getUser result:', user?.id, error?.message)
   return user
 }
