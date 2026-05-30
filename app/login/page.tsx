@@ -3,31 +3,29 @@ import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 export default function LoginPage() {
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   const handleLogin = async () => {
-  setLoading(true)
-  setError('')
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-  console.log('login result:', data, error)
-  if (error) {
-    setError(error.message)
-    setLoading(false)
-    return
+    setLoading(true)
+    setError('')
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    console.log('login result:', data, error)
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+    await new Promise(r => setTimeout(r, 500))
+    window.location.replace('/dashboard')
   }
-  await new Promise(r => setTimeout(r, 500))
-  window.location.replace('/dashboard')
-}
 
   return (
     <div className="min-h-screen bg-ink flex items-center justify-center">
