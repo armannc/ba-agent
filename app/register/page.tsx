@@ -1,39 +1,36 @@
 'use client'
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { useRouter } from 'next/navigation'
-
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export default function RegisterPage() {
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
-  const router = useRouter()
 
   const handleRegister = async () => {
-  setLoading(true)
-  setError('')
-  const { error } = await supabase.auth.signUp({ email, password })
-  if (error) {
-    setError(error.message)
+    setLoading(true)
+    setError('')
+    const { error } = await supabase.auth.signUp({ email, password })
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+    setDone(true)
     setLoading(false)
-    return
   }
-  setDone(true)
-  setLoading(false)
-}
 
   if (done) return (
     <div className="min-h-screen bg-ink flex items-center justify-center">
       <div className="bg-slate-card border border-slate-border rounded-2xl p-8 w-full max-w-md text-center">
-        <h1 className="font-display text-2xl font-semibold text-white mb-2">Проверьте почту</h1>
-        <p className="text-slate-border text-sm">Мы отправили письмо с подтверждением на {email}</p>
+        <h1 className="font-display text-2xl font-semibold text-white mb-2">Готово!</h1>
+        <p className="text-slate-border text-sm">Аккаунт создан. Можете войти.</p>
         <a href="/login" className="mt-6 inline-block text-accent hover:underline text-sm">Войти</a>
       </div>
     </div>
