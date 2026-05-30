@@ -1,11 +1,16 @@
 import { NextRequest } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { analyzeRequirements } from '@/lib/agent'
+import { getUser } from '@/lib/auth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 90
 
 export async function POST(req: NextRequest) {
+  const user = await getUser()
+  console.log('USER IN API:', user?.id, user?.email)
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const formData = await req.formData()
     const file = formData.get('file') as File | null
@@ -32,61 +37,64 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!text.trim()) {
-      return Response.json({ error: 'Текст требований пустой' }, { status: 400 })
-    }
+    if (!text.trim()) return Response.json({ error: 'Текст пустой' }, { status: 400 })
 
-    // Load existing requirements and glossary for conflict check
     const db = supabaseAdmin()
     const [reqRes, glossaryRes] = await Promise.all([
-      db.from('requirements').select('*').in('status', ['active', 'implemented']),
-      db.from('glossary').select('*'),
+      db.from('requirements').select('*').eq('user_id', user.id).in('status', ['active', 'implemented']),
+      db.from('glossary').select('*').eq('user_id', user.id),
     ])
 
-    // Analyze with AI
     const analysisRaw = await analyzeRequirements(text, reqRes.data || [], glossaryRes.data || [])
     let analysis
     try {
-      const cleaned = analysisRaw.replace(/```json|```/g, '').trim()
-      analysis = JSON.parse(cleaned)
+      analysis = JSON.parse(analysisRaw.replace(/```json|```/g, '').trim())
     } catch {
       analysis = { issues: [], conflicts: [], overall_score: 0, summary: 'Не удалось провести анализ' }
     }
 
-    // Save to DB
     const { data, error } = await db.from('requirements').insert({
+      user_id: user.id,
       title,
       description: text.slice(0, 500),
       raw_text: text,
       status,
       priority: 'medium',
       tags: [],
-      conflicts: analysis.conflicts?.map((c: {req_b: string}) => c.req_b) || [],
+      conflicts: analysis.conflicts?.map((c: { req_b: string }) => c.req_b) || [],
       related: [],
       metrics: [],
       analysis,
     }).select().single()
 
     if (error) throw error
-
     return Response.json({ success: true, requirement: data, analysis })
   } catch (error) {
     console.error('Requirements upload error:', error)
-    return Response.json({ error: 'Ошибка при загрузке требований' }, { status: 500 })
+    return Response.json({ error: 'Ошибка при загрузке' }, { status: 500 })
   }
 }
 
 export async function GET() {
+  const user = await getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
   const db = supabaseAdmin()
-  const { data, error } = await db.from('requirements').select('*').order('created_at', { ascending: false })
+  const { data, error } = await db.from('requirements').select('*')
+    .eq('user_id', user.id).order('created_at', { ascending: false })
   if (error) return Response.json({ error: error.message }, { status: 500 })
   return Response.json({ requirements: data })
 }
 
 export async function PATCH(req: NextRequest) {
+  const user = await getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { id, ...updates } = await req.json()
   const db = supabaseAdmin()
-  const { data, error } = await db.from('requirements').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single()
+  const { data, error } = await db.from('requirements')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id).eq('user_id', user.id).select().single()
   if (error) return Response.json({ error: error.message }, { status: 500 })
   return Response.json({ requirement: data })
 }
