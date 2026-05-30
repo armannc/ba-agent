@@ -3,7 +3,6 @@ import { GlossaryEntry, BusinessRequirement, MeetingNote } from '@/types'
 
 const genai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! })
 
-// ─── Build context from DB objects ───────────────────────────────────────────
 export function buildContext(opts: {
   glossary?: GlossaryEntry[]
   requirements?: BusinessRequirement[]
@@ -41,7 +40,6 @@ export function buildContext(opts: {
   return parts.join('\n\n')
 }
 
-// ─── Master system prompt ─────────────────────────────────────────────────────
 export function buildSystemPrompt(context: string): string {
   return `Ты — AI-агент бизнес-аналитика (БА). Твоя роль: помогать БА анализировать данные, работать с бизнес-требованиями, формировать гипотезы и создавать отчёты.
 
@@ -105,7 +103,6 @@ ${context ? `## КОНТЕКСТ РАБОЧЕГО ПРОСТРАНСТВА\n${co
 Отвечай на русском языке. Будь конкретным, полезным и честным.`
 }
 
-// ─── Main chat function ───────────────────────────────────────────────────────
 export async function chatWithBA(
   messages: { role: 'user' | 'assistant'; content: string }[],
   context: { glossary?: GlossaryEntry[]; requirements?: BusinessRequirement[]; notes?: MeetingNote[] }
@@ -113,7 +110,6 @@ export async function chatWithBA(
   const contextStr = buildContext(context)
   const systemPrompt = buildSystemPrompt(contextStr)
 
-  // Convert messages to Gemini format
   const geminiMessages = messages.map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: m.content }],
@@ -129,7 +125,6 @@ export async function chatWithBA(
   })
 
   const lastMessage = messages[messages.length - 1]
-
   const stream = await model.sendMessageStream({ message: lastMessage.content })
 
   return new ReadableStream({
@@ -145,7 +140,6 @@ export async function chatWithBA(
   })
 }
 
-// ─── Requirement Analysis ─────────────────────────────────────────────────────
 export async function analyzeRequirements(
   newRequirements: string,
   existingRequirements: BusinessRequirement[],
@@ -156,6 +150,7 @@ export async function analyzeRequirements(
   const response = await genai.models.generateContent({
     model: 'gemini-2.5-flash',
     config: {
+      temperature: 0,
       systemInstruction: `Ты — эксперт по анализу бизнес-требований. ${contextStr}
     
 Проанализируй новые бизнес-требования и верни ТОЛЬКО валидный JSON (без markdown, без пояснений) в формате:
@@ -187,7 +182,6 @@ export async function analyzeRequirements(
   return response.text ?? '{}'
 }
 
-// ─── Notes Processing ─────────────────────────────────────────────────────────
 export async function processNotes(
   rawNotes: string,
   existingRequirements: BusinessRequirement[]
@@ -197,6 +191,7 @@ export async function processNotes(
   const response = await genai.models.generateContent({
     model: 'gemini-2.5-flash',
     config: {
+      temperature: 0,
       systemInstruction: `Обработай заметки со встречи. Верни ТОЛЬКО валидный JSON без markdown:
 {
   "summary": "краткое резюме встречи (2-3 предложения)",
