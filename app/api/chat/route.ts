@@ -1,20 +1,23 @@
 import { NextRequest } from 'next/server'
 import { chatWithBA } from '@/lib/agent'
 import { supabaseAdmin } from '@/lib/supabase'
+import { getUser } from '@/lib/auth'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
+  const user = await getUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
   try {
     const { messages } = await req.json()
 
-    // Load context from DB
     const db = supabaseAdmin()
     const [glossaryRes, requirementsRes, notesRes] = await Promise.all([
-      db.from('glossary').select('*').order('term'),
-      db.from('requirements').select('*').order('created_at', { ascending: false }),
-      db.from('notes').select('*').order('date', { ascending: false }).limit(10),
+      db.from('glossary').select('*').eq('user_id', user.id).order('term'),
+      db.from('requirements').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      db.from('notes').select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(10),
     ])
 
     const stream = await chatWithBA(messages, {
