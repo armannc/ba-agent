@@ -9,18 +9,18 @@ module.exports = {
     extend: {
       colors: {
         ink: {
-          DEFAULT: '#0D0D0D',
-          soft: '#1A1A2E',
+          DEFAULT: '#1a1d2e',
+          soft: '#1e2133',
         },
         slate: {
-          panel: '#12121F',
-          card: '#1C1C30',
-          border: '#2A2A42',
+          panel: '#1e2133',
+          card: '#252840',
+          border: '#2e3150',
         },
         accent: {
-          DEFAULT: '#6C63FF',
-          hover: '#7C74FF',
-          muted: 'rgba(108,99,255,0.15)',
+          DEFAULT: '#7c6fff',
+          hover: '#9080ff',
+          muted: 'rgba(124,111,255,0.15)',
         },
         signal: {
           green: '#00E5A0',
